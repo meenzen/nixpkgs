@@ -40,7 +40,6 @@
   plasma-activities-stats = callPackage ./plasma-activities-stats { };
   plasma-browser-integration = callPackage ./plasma-browser-integration { };
   plasma-desktop = callPackage ./plasma-desktop { };
-  plasma-dialer = callPackage ./plasma-dialer { };
   plasma-disks = callPackage ./plasma-disks { };
   plasma-firewall = callPackage ./plasma-firewall { };
   plasma-integration = callPackage ./plasma-integration { };
@@ -62,7 +61,6 @@
   print-manager = callPackage ./print-manager { };
   qqc2-breeze-style = callPackage ./qqc2-breeze-style { };
   sddm-kcm = callPackage ./sddm-kcm { };
-  spacebar = callPackage ./spacebar { };
   systemsettings = callPackage ./systemsettings { };
   wacomtablet = callPackage ./wacomtablet { };
   xdg-desktop-portal-kde = callPackage ./xdg-desktop-portal-kde { };
