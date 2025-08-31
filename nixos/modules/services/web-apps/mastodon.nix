@@ -139,20 +139,43 @@ let
 
   mastodonTootctl =
     let
-      sourceExtraEnv = lib.concatMapStrings (p: "source ${p}\n") cfg.extraEnvFiles;
+      loadExtraEnv = lib.concatMapStrings (p: ''$(load_env_file "${p}") '') cfg.extraEnvFiles;
     in
     pkgs.writeShellScriptBin "mastodon-tootctl" ''
       set -a
-      export RAILS_ROOT="${cfg.package}"
-      source "${envFile}"
-      source /var/lib/mastodon/.secrets_env
-      ${sourceExtraEnv}
+
+      load_env_file() {
+        local file="$1"
+        local export_vars=""
+        if [ -f "$file" ]; then
+          while IFS= read -r line || [[ -n "$line" ]]; do
+            # Skip empty lines and comments
+            [[ -z "$line" || "$line" == \#* ]] && continue
+            # Split on first '='
+            local key="''${line%%=*}"
+            local value="''${line#*=}"
+            # Trim spaces from key (systemd doesn’t allow them)
+            key="$(echo -e "$key" | ${pkgs.gnused}/bin/sed -e 's/^[[:space:]]*//' -e 's/[[:space:]]*$//')"
+            # Escape key and value
+            local pair
+            printf -v pair '%q=%q' "$key" "$value"
+            export_vars+=" $pair"
+          done < "$file"
+        fi
+        echo "$export_vars"
+      }
 
       sudo=exec
       if [[ "$USER" != ${cfg.user} ]]; then
-        sudo='exec /run/wrappers/bin/sudo -u ${cfg.user} --preserve-env'
+        sudo='exec /run/wrappers/bin/sudo -u ${cfg.user}'
       fi
-      $sudo ${cfg.package}/bin/tootctl "$@"
+
+      $sudo ${pkgs.coreutils}/bin/env \
+      RAILS_ROOT="${cfg.package}"
+        $(load_env_file "${envFile}") \
+        $(load_env_file /var/lib/mastodon/.secrets_env) \
+        ${loadExtraEnv} \
+        ${cfg.package}/bin/tootctl "$@"
     '';
 
   sidekiqUnits = lib.attrsets.mapAttrs' (
